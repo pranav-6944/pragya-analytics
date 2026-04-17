@@ -112,19 +112,31 @@ def train_models(df):
     ann.fit(Xa, ya)
     return rf, ann, le, sc, FEATS
 
+import threading
+
+def background_load():
+    print("Loading data & training models in background...")
+    try:
+        df, dept, ca = build_df()
+        rf, ann, le, sc, FEATS = train_models(df)
+        G.update(dict(df=df, dept=dept, ca=ca, rf=rf, ann=ann, le=le, sc=sc, FEATS=FEATS))
+        print("Ready.")
+    except Exception as e:
+        print("Error during background load:", e)
+
 @app.on_event("startup")
 async def startup():
-    print("Loading data & training models…")
-    df, dept, ca = build_df()
-    rf, ann, le, sc, FEATS = train_models(df)
-    G.update(dict(df=df, dept=dept, ca=ca, rf=rf, ann=ann, le=le, sc=sc, FEATS=FEATS))
-    print("Ready.")
+    # Start training in a background thread so the port binds instantly
+    threading.Thread(target=background_load, daemon=True).start()
 
 # ── API Router (registered before the SPA catch-all) ─────────────────────────
 api = APIRouter(prefix="/api")
 
 @api.get("/overview")
 async def api_overview():
+    if 'df' not in G:
+        return {"error": "Models are still training in the background. Please wait ~30 seconds and refresh."}
+    
     df = G['df']
     rc = df['result'].value_counts().to_dict()
     sc = df['segment'].value_counts().to_dict()
