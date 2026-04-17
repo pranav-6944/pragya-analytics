@@ -51,7 +51,7 @@ Render.com gives you a free "Web Service" which operates like a real computer, a
   ```
 * **Start Command:** 
   ```bash
-  cd Bonus_FastAPI && uvicorn main:app --host 0.0.0.0 --port $PORT
+  cd Bonus_FastAPI && python main.py
   ```
 * **Instance Type:** Free
 

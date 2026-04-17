@@ -231,3 +231,10 @@ async def serve_react(full_path: str = ""):
     if not os.path.exists(index):
         return JSONResponse({"error": "Frontend not built. Run 'npm run build' in frontend directory."})
     return FileResponse(index)
+
+if __name__ == "__main__":
+    import uvicorn
+    # Render provides a dynamic PORT environment variable.
+    # We default to 8080 for local development if PORT is missing.
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
