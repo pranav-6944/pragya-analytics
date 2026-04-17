@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { @apply font-sans text-navy-900 bg-white antialiased; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-accent text-white font-semibold px-7 py-3.5 rounded-xl
+           hover:bg-accent-hover transition-all duration-200 shadow-lg shadow-accent/20
+           hover:shadow-accent/30 hover:-translate-y-0.5 hover:shadow-xl;
+  }
+  .btn-outline {
+    @apply inline-flex items-center gap-2 border-2 border-navy-900 text-navy-900 font-semibold px-7 py-3.5 rounded-xl
+           hover:bg-navy-900 hover:text-white transition-all duration-200 hover:-translate-y-0.5;
+  }
+  .btn-outline-white {
+    @apply inline-flex items-center gap-2 border-2 border-white text-white font-semibold px-7 py-3.5 rounded-xl
+           hover:bg-white hover:text-navy-900 transition-all duration-200;
+  }
+  .section { @apply py-24 px-6; }
+  .container { @apply max-w-6xl mx-auto; }
+  .section-tag {
+    @apply inline-flex items-center gap-2 bg-accent-light text-accent text-xs font-semibold
+           uppercase tracking-widest px-4 py-1.5 rounded-full mb-5;
+  }
+  .section-title { @apply text-4xl font-bold text-navy-900 leading-tight; }
+  .section-sub { @apply text-lg text-navy-600 mt-4 leading-relaxed; }
+  .card {
+    @apply bg-white border border-gray-100 rounded-2xl p-8 hover:shadow-xl hover:-translate-y-1
+           transition-all duration-300 shadow-sm;
+  }
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #0EA5E9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Noise texture overlay */
+.noise::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; border-radius: inherit; z-index: 1;
+}
+
+/* Chart canvas */
+canvas { max-height: 280px !important; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 99px; }
+
+/* Animate on scroll helper */
+.reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }

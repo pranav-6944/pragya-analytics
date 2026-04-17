@@ -1,0 +1,5 @@
+Student_Segment,Count,Avg_GPA,Avg_Attendance,Avg_Course_Load,Avg_Risk_Score
+At-Risk Students,2130,1.011,73.577,12.973,0.743
+Average Performers,2211,2.188,73.062,22.706,0.178
+High Achievers,3580,2.47,82.294,10.216,0.051
+Struggling Students,2079,2.043,26.211,12.34,0.732
