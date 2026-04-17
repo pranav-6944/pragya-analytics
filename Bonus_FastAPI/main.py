@@ -158,6 +158,7 @@ async def api_overview():
 
 @api.get("/scatter")
 async def api_scatter():
+    if 'df' not in G: return {"error": "Models are loading, please wait."}
     df = G['df']
     sample = df.sample(min(1500, len(df)), random_state=42)
     return {
@@ -169,6 +170,7 @@ async def api_scatter():
 
 @api.get("/departments")
 async def api_departments():
+    if 'dept' not in G: return {"error": "Models are loading, please wait."}
     dept = G['dept'].sort_values('avg_gpa', ascending=False).head(15)
     return {
         "ids"        : dept['department_id'].tolist(),
@@ -179,6 +181,7 @@ async def api_departments():
 
 @api.get("/courses")
 async def api_courses():
+    if 'ca' not in G: return {"error": "Models are loading, please wait."}
     ca = G['ca'].sort_values('difficulty', ascending=False).head(15)
     return {
         "ids"        : ca['course_id'].tolist(),
@@ -189,6 +192,7 @@ async def api_courses():
 
 @api.get("/segments")
 async def api_segments():
+    if 'df' not in G: return {"error": "Models are loading, please wait."}
     df   = G['df']
     cols = ['GPA','att_pct','course_load','pass_rate']
     prof = df.groupby('segment')[cols].mean().round(3).reset_index()
@@ -203,6 +207,7 @@ async def api_segments():
 
 @api.post("/predict")
 async def api_predict(request: Request):
+    if 'rf' not in G: return {"error": "Models are loading, please wait."}
     body    = await request.json()
     att     = float(body.get('attendance', 75))
     marks   = float(body.get('marks', 60))
