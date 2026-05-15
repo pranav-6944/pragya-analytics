@@ -201,6 +201,99 @@ function PredictPanel() {
   )
 }
 
+// ── Segments section (standalone to avoid IIFE render issues) ─────────────────
+function SegmentsSection({ segData }) {
+  const segs = segData?.segments
+  if (!Array.isArray(segs) || segs.length === 0) {
+    return (
+      <div style={{padding:'60px 0', textAlign:'center', color:'#94A3B8'}}>
+        <p style={{fontSize:14}}>Segment data is not available yet. Try refreshing in a moment.</p>
+      </div>
+    )
+  }
+  const gpas  = segData.avg_gpa      || segs.map(() => 0)
+  const atts  = segData.avg_att       || segs.map(() => 0)
+  const loads = segData.avg_load      || segs.map(() => 0)
+  const prs   = segData.avg_passrate  || segs.map(() => 0)
+  const cnts  = segData.counts        || segs.map(() => 0)
+  const colors = Object.values(SEG_COLORS)
+
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-slate-900">Student Segments</h1>
+        <p className="text-sm text-gray-400 mt-1">K-Means clustering (k=4) — comparative profile</p>
+      </div>
+      <div className="grid grid-cols-2 gap-5">
+        <Card title="Segment Radar" sub="Feature comparison across all clusters" badge="K-Means">
+          <div style={{height:300}}>
+            <Radar
+              data={{
+                labels: ['GPA', 'Attendance', 'Course Load', 'Pass Rate'],
+                datasets: segs.map((s, i) => ({
+                  label: s,
+                  fill: true,
+                  data: [
+                    (gpas[i]  || 0) / 4 * 100,
+                    (atts[i]  || 0),
+                    Math.min((loads[i] || 0) / 60 * 100, 100),
+                    (prs[i]   || 0) * 100,
+                  ],
+                  backgroundColor: (colors[i] || ACCENT) + '33',
+                  borderColor:     colors[i]  || ACCENT,
+                  borderWidth: 2,
+                  pointRadius: 4,
+                }))
+              }}
+              options={{
+                plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } },
+                scales: {
+                  r: {
+                    min: 0, max: 100,
+                    ticks: { stepSize: 25, font: { size: 10 } },
+                    grid:  { color: '#E2E8F0' },
+                  }
+                }
+              }}
+            />
+          </div>
+        </Card>
+
+        <Card title="Segment Profiles" sub="Average feature values per cluster">
+          <div className="overflow-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  {['Segment','Count','Avg GPA','Att %','Pass %'].map(h => (
+                    <th key={h} className="text-left text-xs text-gray-400 uppercase tracking-wide pb-3 font-semibold pr-4">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {segs.map((seg, i) => (
+                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/80">
+                    <td className="py-3 pr-4">
+                      <span className="flex items-center gap-2 font-medium text-slate-800">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ background: colors[i] || ACCENT }} />
+                        <span className="text-xs">{seg}</span>
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4 text-gray-600 tabular-nums">{(cnts[i] ?? 0).toLocaleString()}</td>
+                    <td className="py-3 pr-4 text-gray-600 tabular-nums">{(gpas[i] ?? 0).toFixed(3)}</td>
+                    <td className="py-3 pr-4 text-gray-600 tabular-nums">{(atts[i] ?? 0).toFixed(1)}%</td>
+                    <td className="py-3 text-gray-600 tabular-nums">{((prs[i] ?? 0) * 100).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
 // ── Loading spinner ───────────────────────────────────────────────────────────
 function Spinner() {
   return (
@@ -389,7 +482,7 @@ export default function Dashboard() {
           <div style={{marginBottom:16, padding:'14px 18px', background:'#FEF2F2', border:'1px solid #FECACA',
                        borderRadius:12, fontSize:13, color:'#B91C1C'}}>
             ⚠️ Could not connect to the API server (<code>{fetchErr}</code>).{' '}
-            <button onClick={() => loadData(0)}
+            <button onClick={() => pollHealth(0)}
               style={{marginLeft:8, fontSize:12, fontWeight:600, color:'#6366F1',
                       background:'none', border:'none', cursor:'pointer', textDecoration:'underline'}}>
               Retry now
@@ -556,75 +649,7 @@ export default function Dashboard() {
           )}
 
           {/* ══ SEGMENTS ══ */}
-          {page === 'segments' && data.segments?.segments?.length > 0 && (() => {
-            const segs = data.segments.segments || []
-            const gpas = data.segments.avg_gpa    || []
-            const atts = data.segments.avg_att     || []
-            const loads= data.segments.avg_load    || []
-            const prs  = data.segments.avg_passrate|| []
-            const cnts = data.segments.counts      || []
-            return (
-            <div>
-              <div className="mb-8">
-                <h1 className="text-2xl font-bold text-slate-900">Student Segments</h1>
-                <p className="text-sm text-gray-400 mt-1">K-Means clustering (k=4) — comparative profile</p>
-              </div>
-              <div className="grid grid-cols-2 gap-5">
-                <Card title="Segment Radar" sub="Feature comparison across all clusters" badge="K-Means">
-                  <div style={{height:300}}>
-                    <Radar data={{
-                      labels:['GPA','Attendance','Course Load','Pass Rate'],
-                      datasets: segs.map((s,i)=>({
-                        label:s, fill:true,
-                        data:[
-                          ((gpas[i] || 0) / 4 * 100),
-                          (atts[i]  || 0),
-                          Math.min(((loads[i] || 0) / 60 * 100), 100),
-                          ((prs[i]  || 0) * 100)
-                        ],
-                        backgroundColor:(Object.values(SEG_COLORS)[i]||ACCENT)+'22',
-                        borderColor: Object.values(SEG_COLORS)[i]||ACCENT,
-                        borderWidth:2, pointRadius:4,
-                      }))
-                    }} options={{plugins:{legend:{position:'right',labels:{boxWidth:10}}},
-                      scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:10}},grid:{color:'#E2E8F0'}}}}} />
-                  </div>
-                </Card>
-
-                <Card title="Segment Profiles" sub="Average feature values per cluster">
-                  <div className="overflow-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-100">
-                          {['Segment','Count','Avg GPA','Att%','Pass%'].map(h=>(
-                            <th key={h} className="text-left text-xs text-gray-400 uppercase tracking-wide pb-3 font-semibold pr-4">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {segs.map((seg,i)=>(
-                          <tr key={seg} className="border-b border-gray-50 hover:bg-gray-50/80">
-                            <td className="py-3 pr-4">
-                              <span className="flex items-center gap-2 font-medium text-slate-800">
-                                <span className="w-2 h-2 rounded-full flex-shrink-0"
-                                      style={{background:Object.values(SEG_COLORS)[i]||ACCENT}} />
-                                <span className="text-xs">{seg}</span>
-                              </span>
-                            </td>
-                            <td className="py-3 pr-4 text-gray-600 tabular-nums">{(cnts[i] ?? 0).toLocaleString()}</td>
-                            <td className="py-3 pr-4 text-gray-600 tabular-nums">{(gpas[i] ?? 0).toFixed(3)}</td>
-                            <td className="py-3 pr-4 text-gray-600 tabular-nums">{(atts[i] ?? 0).toFixed(1)}%</td>
-                            <td className="py-3 text-gray-600 tabular-nums">{((prs[i] ?? 0) * 100).toFixed(1)}%</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </Card>
-              </div>
-            </div>
-            )
-          })()}
+          {page === 'segments' && <SegmentsSection segData={data.segments} />}
 
           </>
         ))}
