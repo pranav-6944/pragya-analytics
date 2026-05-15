@@ -226,19 +226,49 @@ export default function Dashboard() {
   const [data, setData]      = useState({})
   const [loading, setLoading] = useState(true)
   const [fetchErr, setFetchErr] = useState(null)
+  const [warmingUp, setWarmingUp] = useState(false)
+  const [retryCountdown, setRetryCountdown] = useState(0)
+  const [retryAttempt, setRetryAttempt]     = useState(0)
+  const MAX_RETRIES = 12   // ~60 seconds total
+  const RETRY_DELAY = 5    // seconds between retries
 
-  useEffect(() => {
+  const loadData = React.useCallback((attempt = 0) => {
+    setLoading(true)
+    setFetchErr(null)
     Promise.all([
-      fetch(`${API}/api/overview`).then(r => { if(!r.ok)throw new Error(r.status); return r.json() }),
-      fetch(`${API}/api/scatter`).then(r => r.json()),
-      fetch(`${API}/api/departments`).then(r => r.json()),
-      fetch(`${API}/api/courses`).then(r => r.json()),
-      fetch(`${API}/api/segments`).then(r => r.json()),
+      fetch(`${API}/api/overview`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
+      fetch(`${API}/api/scatter`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
+      fetch(`${API}/api/departments`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
+      fetch(`${API}/api/courses`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
+      fetch(`${API}/api/segments`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
     ]).then(([overview, scatter, depts, courses, segments]) => {
       setData({ overview, scatter, depts, courses, segments })
       setLoading(false)
-    }).catch(e => { setFetchErr(e.message); setLoading(false) })
+      setWarmingUp(false)
+      setFetchErr(null)
+    }).catch(e => {
+      const is503 = e.status === 503 || e.message === '503'
+      if (is503 && attempt < MAX_RETRIES) {
+        // Cold start — server is still loading ML models, retry automatically
+        setLoading(false)
+        setWarmingUp(true)
+        setRetryAttempt(attempt + 1)
+        let secs = RETRY_DELAY
+        setRetryCountdown(secs)
+        const tick = setInterval(() => {
+          secs -= 1
+          setRetryCountdown(secs)
+          if (secs <= 0) { clearInterval(tick); loadData(attempt + 1) }
+        }, 1000)
+      } else {
+        setFetchErr(e.message)
+        setLoading(false)
+        setWarmingUp(false)
+      }
+    })
   }, [])
+
+  useEffect(() => { loadData(0) }, [loadData])
 
   const navItems = [
     { id:'overview',    icon:'⊞', label:'Overview' },
@@ -294,13 +324,36 @@ export default function Dashboard() {
       {/* ── Main content ── */}
       <main style={{marginLeft:220, flex:1, padding:'32px 36px'}}>
 
-        {fetchErr && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-            ⚠️ API Error: <code>{fetchErr}</code> — Make sure the FastAPI server is running.
+        {/* Warming-up banner (cold start) */}
+        {warmingUp && (
+          <div style={{marginBottom:16, padding:'14px 18px', background:'#FFF7ED', border:'1px solid #FED7AA',
+                       borderRadius:12, display:'flex', alignItems:'center', gap:12}}>
+            <div style={{width:20, height:20, border:'2px solid #FB923C', borderTopColor:'transparent',
+                         borderRadius:'50%', animation:'spin 0.8s linear infinite', flexShrink:0}} />
+            <div>
+              <p style={{margin:0, fontSize:13, fontWeight:600, color:'#C2410C'}}>
+                🚀 Server is warming up… (attempt {retryAttempt}/{MAX_RETRIES})
+              </p>
+              <p style={{margin:'2px 0 0', fontSize:12, color:'#EA580C'}}>
+                The AI models are loading. Retrying in {retryCountdown}s — this takes ~30–60 seconds on first load.
+              </p>
+            </div>
           </div>
         )}
 
-        {loading ? <Spinner /> : (
+        {fetchErr && (
+          <div style={{marginBottom:16, padding:'14px 18px', background:'#FEF2F2', border:'1px solid #FECACA',
+                       borderRadius:12, fontSize:13, color:'#B91C1C'}}>
+            ⚠️ Could not connect to the API server (<code>{fetchErr}</code>).{' '}
+            <button onClick={() => loadData(0)}
+              style={{marginLeft:8, fontSize:12, fontWeight:600, color:'#6366F1',
+                      background:'none', border:'none', cursor:'pointer', textDecoration:'underline'}}>
+              Retry now
+            </button>
+          </div>
+        )}
+
+        {(loading && !warmingUp) ? <Spinner /> : (!warmingUp && (
           <>
 
           {/* ══ OVERVIEW ══ */}
@@ -522,7 +575,7 @@ export default function Dashboard() {
           )}
 
           </>
-        )}
+        ))}
       </main>
     </div>
   )

@@ -22,7 +22,12 @@ app.add_middleware(CORSMiddleware,
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 DIST = os.path.join(BASE, "static", "dist")
-app.mount("/assets", StaticFiles(directory=os.path.join(DIST,"assets")), name="assets")
+# Only mount /assets if the build directory exists (avoids crash if npm build was skipped)
+_assets_dir = os.path.join(DIST, "assets")
+if os.path.isdir(_assets_dir):
+    app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
+else:
+    print(f"WARNING: {_assets_dir} not found. Run 'npm run build' in frontend/ directory.")
 
 # ── Global model store ────────────────────────────────────────────────────────
 G = {}
@@ -113,16 +118,25 @@ def train_models(df):
     return rf, ann, le, sc, FEATS
 
 import threading
+import traceback
 
 def background_load():
-    print("Loading data & training models in background...")
+    print("[PRAGYA] Loading data & training models in background...")
+    print(f"[PRAGYA] Looking for Excel file at: {FILE}")
+    print(f"[PRAGYA] File exists: {os.path.exists(FILE)}")
     try:
         df, dept, ca = build_df()
+        print(f"[PRAGYA] Data loaded. {len(df)} students found.")
         rf, ann, le, sc, FEATS = train_models(df)
         G.update(dict(df=df, dept=dept, ca=ca, rf=rf, ann=ann, le=le, sc=sc, FEATS=FEATS))
-        print("Ready.")
+        print("[PRAGYA] ✅ Models ready. All API endpoints are now live.")
+    except FileNotFoundError as e:
+        print(f"[PRAGYA] ❌ CRITICAL: Excel file not found! {e}")
+        print(f"[PRAGYA] BASE dir = {BASE}")
+        print(f"[PRAGYA] Expected FILE = {FILE}")
     except Exception as e:
-        print("Error during background load:", e)
+        print(f"[PRAGYA] ❌ Error during background load: {e}")
+        traceback.print_exc()
 
 @app.on_event("startup")
 async def startup():
@@ -131,6 +145,20 @@ async def startup():
 
 # ── API Router (registered before the SPA catch-all) ─────────────────────────
 api = APIRouter(prefix="/api")
+
+@api.get("/health")
+async def api_health():
+    """Health check — returns whether models are loaded and basic system info."""
+    excel_exists = os.path.exists(FILE)
+    return {
+        "status": "ready" if 'df' in G else "loading",
+        "models_loaded": 'df' in G,
+        "excel_file_found": excel_exists,
+        "excel_path": FILE,
+        "dist_exists": os.path.isdir(DIST),
+        "assets_exists": os.path.isdir(os.path.join(DIST, "assets")),
+        "student_count": int(len(G['df'])) if 'df' in G else 0,
+    }
 
 @api.get("/overview")
 async def api_overview():
