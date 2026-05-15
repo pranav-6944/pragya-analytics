@@ -556,7 +556,14 @@ export default function Dashboard() {
           )}
 
           {/* ══ SEGMENTS ══ */}
-          {page === 'segments' && data.segments && (
+          {page === 'segments' && data.segments?.segments?.length > 0 && (() => {
+            const segs = data.segments.segments || []
+            const gpas = data.segments.avg_gpa    || []
+            const atts = data.segments.avg_att     || []
+            const loads= data.segments.avg_load    || []
+            const prs  = data.segments.avg_passrate|| []
+            const cnts = data.segments.counts      || []
+            return (
             <div>
               <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-900">Student Segments</h1>
@@ -567,13 +574,13 @@ export default function Dashboard() {
                   <div style={{height:300}}>
                     <Radar data={{
                       labels:['GPA','Attendance','Course Load','Pass Rate'],
-                      datasets: data.segments.segments.map((s,i)=>({
+                      datasets: segs.map((s,i)=>({
                         label:s, fill:true,
                         data:[
-                          data.segments.avg_gpa[i]/4*100,
-                          data.segments.avg_att[i],
-                          Math.min(data.segments.avg_load[i]/60*100,100),
-                          data.segments.avg_passrate[i]*100
+                          ((gpas[i] || 0) / 4 * 100),
+                          (atts[i]  || 0),
+                          Math.min(((loads[i] || 0) / 60 * 100), 100),
+                          ((prs[i]  || 0) * 100)
                         ],
                         backgroundColor:(Object.values(SEG_COLORS)[i]||ACCENT)+'22',
                         borderColor: Object.values(SEG_COLORS)[i]||ACCENT,
@@ -595,7 +602,7 @@ export default function Dashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.segments.segments.map((seg,i)=>(
+                        {segs.map((seg,i)=>(
                           <tr key={seg} className="border-b border-gray-50 hover:bg-gray-50/80">
                             <td className="py-3 pr-4">
                               <span className="flex items-center gap-2 font-medium text-slate-800">
@@ -604,10 +611,10 @@ export default function Dashboard() {
                                 <span className="text-xs">{seg}</span>
                               </span>
                             </td>
-                            <td className="py-3 pr-4 text-gray-600 tabular-nums">{data.segments.counts[i]?.toLocaleString()}</td>
-                            <td className="py-3 pr-4 text-gray-600 tabular-nums">{data.segments.avg_gpa[i]?.toFixed(3)}</td>
-                            <td className="py-3 pr-4 text-gray-600 tabular-nums">{data.segments.avg_att[i]?.toFixed(1)}%</td>
-                            <td className="py-3 text-gray-600 tabular-nums">{(data.segments.avg_passrate[i]*100)?.toFixed(1)}%</td>
+                            <td className="py-3 pr-4 text-gray-600 tabular-nums">{(cnts[i] ?? 0).toLocaleString()}</td>
+                            <td className="py-3 pr-4 text-gray-600 tabular-nums">{(gpas[i] ?? 0).toFixed(3)}</td>
+                            <td className="py-3 pr-4 text-gray-600 tabular-nums">{(atts[i] ?? 0).toFixed(1)}%</td>
+                            <td className="py-3 text-gray-600 tabular-nums">{((prs[i] ?? 0) * 100).toFixed(1)}%</td>
                           </tr>
                         ))}
                       </tbody>
@@ -616,7 +623,8 @@ export default function Dashboard() {
                 </Card>
               </div>
             </div>
-          )}
+            )
+          })()}
 
           </>
         ))}

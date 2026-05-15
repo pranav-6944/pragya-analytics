@@ -227,13 +227,16 @@ async def api_segments():
     df   = G['df']
     cols = ['GPA','att_pct','course_load','pass_rate']
     prof = df.groupby('segment')[cols].mean().round(3).reset_index()
+    vc   = df['segment'].value_counts()
+    # Sanitize: reindex can produce NaN floats which break JSON serialization
+    counts = [int(vc.get(seg, 0)) for seg in prof['segment']]
     return {
         "segments"    : prof['segment'].tolist(),
-        "avg_gpa"     : prof['GPA'].tolist(),
-        "avg_att"     : prof['att_pct'].tolist(),
-        "avg_load"    : prof['course_load'].tolist(),
-        "avg_passrate": prof['pass_rate'].tolist(),
-        "counts"      : df['segment'].value_counts().reindex(prof['segment']).tolist(),
+        "avg_gpa"     : [round(float(v), 3) for v in prof['GPA']],
+        "avg_att"     : [round(float(v), 1) for v in prof['att_pct']],
+        "avg_load"    : [round(float(v), 1) for v in prof['course_load']],
+        "avg_passrate": [round(float(v), 4) for v in prof['pass_rate']],
+        "counts"      : counts,
     }
 
 @api.post("/predict")
