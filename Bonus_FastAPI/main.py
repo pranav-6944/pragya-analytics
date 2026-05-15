@@ -77,7 +77,7 @@ def build_df():
 
     # Clustering
     X_km = StandardScaler().fit_transform(df[['GPA','att_pct','course_load','pass_rate']])
-    km = KMeans(n_clusters=4, random_state=42, n_init=10)
+    km = KMeans(n_clusters=4, random_state=42, n_init=3)  # n_init=3 is fast enough
     df['cluster'] = km.fit_predict(X_km)
     cl_gpa = df.groupby('cluster')['GPA'].mean().sort_values(ascending=False)
     seg_map = {cl_gpa.index[0]:'High Achievers', cl_gpa.index[1]:'Average Performers',
@@ -106,14 +106,17 @@ def train_models(df):
     y  = le.fit_transform(df['result'])
     X  = df[FEATS]
     Xtr,Xte,ytr,yte = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-    rf = RandomForestClassifier(n_estimators=100, random_state=42)
+    # n_estimators=25 & n_jobs=-1 → ~4x faster than 100 trees on free tier
+    rf = RandomForestClassifier(n_estimators=25, random_state=42, n_jobs=-1)
     rf.fit(Xtr, ytr)
 
     df['dropout'] = ((df['GPA']<1.5)|(df['att_pct']<50)).astype(int)
     sc = MinMaxScaler()
     X_ann = sc.fit_transform(df[FEATS])
     Xa,Xb,ya,yb = train_test_split(X_ann, df['dropout'], test_size=0.2, random_state=42, stratify=df['dropout'])
-    ann = MLPClassifier(hidden_layer_sizes=(128,64,32), activation='relu', solver='adam', max_iter=200, random_state=42)
+    # Simpler MLP: 2 layers, max_iter=100 → runs in seconds on free tier
+    ann = MLPClassifier(hidden_layer_sizes=(64, 32), activation='relu', solver='adam',
+                        max_iter=100, random_state=42, early_stopping=True, n_iter_no_change=10)
     ann.fit(Xa, ya)
     return rf, ann, le, sc, FEATS
 

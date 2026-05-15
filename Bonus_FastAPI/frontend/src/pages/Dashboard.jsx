@@ -229,46 +229,89 @@ export default function Dashboard() {
   const [warmingUp, setWarmingUp] = useState(false)
   const [retryCountdown, setRetryCountdown] = useState(0)
   const [retryAttempt, setRetryAttempt]     = useState(0)
-  const MAX_RETRIES = 12   // ~60 seconds total
-  const RETRY_DELAY = 5    // seconds between retries
+  const MAX_POLLS  = 45   // 45 × 4s = 3 minutes max wait
+  const POLL_DELAY = 4    // seconds between health checks
 
-  const loadData = React.useCallback((attempt = 0) => {
+  const fetchAllData = React.useCallback(() => {
     setLoading(true)
     setFetchErr(null)
     Promise.all([
-      fetch(`${API}/api/overview`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
-      fetch(`${API}/api/scatter`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
-      fetch(`${API}/api/departments`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
-      fetch(`${API}/api/courses`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
-      fetch(`${API}/api/segments`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status: r.status}); return r.json() }),
+      fetch(`${API}/api/overview`).then(r    => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
+      fetch(`${API}/api/scatter`).then(r     => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
+      fetch(`${API}/api/departments`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
+      fetch(`${API}/api/courses`).then(r     => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
+      fetch(`${API}/api/segments`).then(r    => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
     ]).then(([overview, scatter, depts, courses, segments]) => {
       setData({ overview, scatter, depts, courses, segments })
-      setLoading(false)
       setWarmingUp(false)
       setFetchErr(null)
+      setLoading(false)
     }).catch(e => {
-      const is503 = e.status === 503 || e.message === '503'
-      if (is503 && attempt < MAX_RETRIES) {
-        // Cold start — server is still loading ML models, retry automatically
-        setLoading(false)
-        setWarmingUp(true)
-        setRetryAttempt(attempt + 1)
-        let secs = RETRY_DELAY
-        setRetryCountdown(secs)
-        const tick = setInterval(() => {
-          secs -= 1
-          setRetryCountdown(secs)
-          if (secs <= 0) { clearInterval(tick); loadData(attempt + 1) }
-        }, 1000)
-      } else {
-        setFetchErr(e.message)
-        setLoading(false)
-        setWarmingUp(false)
-      }
+      setFetchErr(e.message)
+      setLoading(false)
+      setWarmingUp(false)
     })
   }, [])
 
-  useEffect(() => { loadData(0) }, [loadData])
+  const pollHealth = React.useCallback((poll = 0) => {
+    setLoading(false)
+    setWarmingUp(true)
+    setRetryAttempt(poll + 1)
+
+    fetch(`${API}/api/health`)
+      .then(r => r.json())
+      .then(h => {
+        if (h.models_loaded) {
+          // ✅ Models ready — go fetch dashboard data
+          setWarmingUp(false)
+          fetchAllData()
+        } else if (poll < MAX_POLLS) {
+          // ⏳ Still loading — start countdown, then poll again
+          let secs = POLL_DELAY
+          setRetryCountdown(secs)
+          const tick = setInterval(() => {
+            secs -= 1
+            setRetryCountdown(secs)
+            if (secs <= 0) { clearInterval(tick); pollHealth(poll + 1) }
+          }, 1000)
+        } else {
+          // ❌ Gave up after 3 minutes
+          setFetchErr('Server took too long to load models. Please refresh the page.')
+          setWarmingUp(false)
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        // Health endpoint itself failed (server down)
+        if (poll < MAX_POLLS) {
+          let secs = POLL_DELAY
+          setRetryCountdown(secs)
+          const tick = setInterval(() => {
+            secs -= 1
+            setRetryCountdown(secs)
+            if (secs <= 0) { clearInterval(tick); pollHealth(poll + 1) }
+          }, 1000)
+        } else {
+          setFetchErr('Cannot reach server. Check Render logs.')
+          setWarmingUp(false)
+          setLoading(false)
+        }
+      })
+  }, [fetchAllData])
+
+  useEffect(() => {
+    // First check health; if models already ready, fetch immediately
+    fetch(`${API}/api/health`)
+      .then(r => r.json())
+      .then(h => {
+        if (h.models_loaded) {
+          fetchAllData()
+        } else {
+          pollHealth(0)
+        }
+      })
+      .catch(() => pollHealth(0))
+  }, [fetchAllData, pollHealth])
 
   const navItems = [
     { id:'overview',    icon:'⊞', label:'Overview' },
@@ -332,10 +375,11 @@ export default function Dashboard() {
                          borderRadius:'50%', animation:'spin 0.8s linear infinite', flexShrink:0}} />
             <div>
               <p style={{margin:0, fontSize:13, fontWeight:600, color:'#C2410C'}}>
-                🚀 Server is warming up… (attempt {retryAttempt}/{MAX_RETRIES})
+                🚀 AI Models loading on server… (check {retryAttempt}/{MAX_POLLS})
               </p>
               <p style={{margin:'2px 0 0', fontSize:12, color:'#EA580C'}}>
-                The AI models are loading. Retrying in {retryCountdown}s — this takes ~30–60 seconds on first load.
+                Elapsed ≈ {Math.round(retryAttempt * POLL_DELAY)}s — Retrying in {retryCountdown}s.
+                Free tier needs ~60s to train models. Please wait…
               </p>
             </div>
           </div>
