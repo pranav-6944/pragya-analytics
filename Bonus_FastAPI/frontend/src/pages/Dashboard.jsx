@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Component } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement,
@@ -9,17 +9,16 @@ import { Bar, Doughnut, Scatter, Radar } from 'react-chartjs-2'
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement,
   ArcElement, RadialLinearScale, Tooltip, Legend)
 
-// Defaults
-ChartJS.defaults.font.family = 'Inter, sans-serif'
-ChartJS.defaults.font.size   = 11
-ChartJS.defaults.color       = '#64748B'
-ChartJS.defaults.plugins.tooltip.backgroundColor = '#0F172A'
-ChartJS.defaults.plugins.tooltip.padding         = 10
-ChartJS.defaults.plugins.tooltip.cornerRadius    = 8
-ChartJS.defaults.plugins.legend.labels.boxWidth  = 10
-ChartJS.defaults.plugins.legend.labels.padding   = 12
+// Safe ChartJS defaults configuration
+try {
+  ChartJS.defaults.font.family = 'Inter, sans-serif'
+  ChartJS.defaults.font.size   = 11
+  ChartJS.defaults.color       = '#64748B'
+} catch(e) {
+  console.warn("ChartJS defaults warning:", e)
+}
 
-// Use relative URLs – works both in dev (proxied) and production (same server)
+// Relative API URL — works in dev proxy and production
 const API = ''
 
 const ACCENT = '#6366F1'
@@ -30,7 +29,6 @@ const SEG_COLORS = {
   'At-Risk Students'    : '#EF4444',
 }
 
-// Static class maps so Tailwind JIT includes them
 const RESULT_BADGES = {
   Distinction : { wrap:'bg-emerald-50 text-emerald-700 border border-emerald-200', icon:'🏆' },
   Pass        : { wrap:'bg-blue-50 text-blue-700 border border-blue-200',          icon:'✅' },
@@ -42,6 +40,42 @@ const RISK_REC = {
   High   : { cls:'bg-red-50 border-red-400 text-red-900',         msg:'🚨 High dropout risk detected. Immediate academic counselling, attendance monitoring, and tutoring strongly recommended.' },
   Medium : { cls:'bg-blue-50 border-blue-400 text-blue-900',      msg:'📌 Moderate risk. Monitor weekly and provide proactive academic support before the next exam cycle.' },
   Low    : { cls:'bg-emerald-50 border-emerald-400 text-emerald-900', msg:'✅ Student is on a strong track. Encourage advanced coursework and research opportunities.' },
+}
+
+// ── Error Boundary ────────────────────────────────────────────────────────────
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("Dashboard caught error:", error, errorInfo)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center font-sans">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-md shadow-lg">
+            <span className="text-5xl mb-4 block">⚠️</span>
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Dashboard Error Caught</h2>
+            <p className="text-xs text-slate-500 mb-6">{this.state.error?.message || 'An unexpected error occurred while loading dashboard analytics.'}</p>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition-all cursor-pointer">
+                🔄 Reload Page
+              </button>
+              <Link to="/" className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs px-5 py-2.5 rounded-xl transition-all text-decoration-none">
+                🏠 Return Home
+              </Link>
+            </div>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
@@ -100,10 +134,10 @@ function PredictPanel() {
     finally { setLoading(false) }
   }
 
-  const rb = result ? RESULT_BADGES[result.result] : null
-  const riskBarColor  = result ? RISK_BAR_COLORS[result.risk_level]  : 'bg-gray-300'
-  const riskTextColor = result ? RISK_TEXT_COLORS[result.risk_level] : 'text-gray-500'
-  const rec           = result ? RISK_REC[result.risk_level] : null
+  const rb = (result && RESULT_BADGES[result.result]) ? RESULT_BADGES[result.result] : { wrap:'bg-indigo-50 text-indigo-700 border border-indigo-200', icon:'📊' }
+  const riskBarColor  = result ? (RISK_BAR_COLORS[result.risk_level] || 'bg-indigo-500') : 'bg-gray-300'
+  const riskTextColor = result ? (RISK_TEXT_COLORS[result.risk_level] || 'text-indigo-600') : 'text-gray-500'
+  const rec           = result ? (RISK_REC[result.risk_level] || null) : null
   const probColors    = { Distinction:'#10B981', Pass:'#6366F1', Fail:'#EF4444' }
 
   return (
@@ -155,27 +189,29 @@ function PredictPanel() {
                   Dropout Risk —{' '}
                   <span className={riskTextColor}>{result.risk_level}</span>
                 </span>
-                <span className="font-mono text-gray-400">{(result.dropout_prob*100).toFixed(1)}%</span>
+                <span className="font-mono text-gray-400">{result.dropout_prob != null ? (result.dropout_prob*100).toFixed(1) : 0}%</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div className={`h-full rounded-full transition-all duration-700 ${riskBarColor}`}
-                     style={{width:`${result.dropout_prob*100}%`}} />
+                     style={{width:`${result.dropout_prob ? result.dropout_prob*100 : 0}%`}} />
               </div>
             </div>
 
             {/* Prob bars */}
-            <div className="space-y-2.5 sm:space-y-3">
-              {Object.entries(result.probabilities).map(([cls, p]) => (
-                <div key={cls} className="flex items-center gap-2.5 sm:gap-3">
-                  <span className="text-xs font-medium text-gray-500 w-20 sm:w-24 flex-shrink-0 truncate">{cls}</span>
-                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-700"
-                         style={{width:`${p*100}%`, background: probColors[cls]}} />
+            {result.probabilities && (
+              <div className="space-y-2.5 sm:space-y-3">
+                {Object.entries(result.probabilities).map(([cls, p]) => (
+                  <div key={cls} className="flex items-center gap-2.5 sm:gap-3">
+                    <span className="text-xs font-medium text-gray-500 w-20 sm:w-24 flex-shrink-0 truncate">{cls}</span>
+                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700"
+                           style={{width:`${p*100}%`, background: probColors[cls] || ACCENT}} />
+                    </div>
+                    <span className="text-xs font-mono text-gray-400 w-10 text-right">{(p*100).toFixed(1)}%</span>
                   </div>
-                  <span className="text-xs font-mono text-gray-400 w-10 text-right">{(p*100).toFixed(1)}%</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Recommendation */}
             {rec && (
@@ -205,11 +241,11 @@ function SegmentsSection({ segData, onRetry }) {
       </div>
     )
   }
-  const gpas  = segData.avg_gpa      || segs.map(() => 0)
-  const atts  = segData.avg_att       || segs.map(() => 0)
-  const loads = segData.avg_load      || segs.map(() => 0)
-  const prs   = segData.avg_passrate  || segs.map(() => 0)
-  const cnts  = segData.counts        || segs.map(() => 0)
+  const gpas  = Array.isArray(segData?.avg_gpa) ? segData.avg_gpa : segs.map(() => 0)
+  const atts  = Array.isArray(segData?.avg_att) ? segData.avg_att : segs.map(() => 0)
+  const loads = Array.isArray(segData?.avg_load) ? segData.avg_load : segs.map(() => 0)
+  const prs   = Array.isArray(segData?.avg_passrate) ? segData.avg_passrate : segs.map(() => 0)
+  const cnts  = Array.isArray(segData?.counts) ? segData.counts : segs.map(() => 0)
 
   return (
     <div>
@@ -311,8 +347,8 @@ const baseBar = (horiz=false) => ({
     : { x:{ grid:{display:false}, ticks:{font:{size:10}} },   y:{ grid:{color:'#F8FAFC'}, ticks:{font:{size:10}} } }
 })
 
-// ── Main Dashboard ────────────────────────────────────────────────────────────
-export default function Dashboard() {
+// ── Main Dashboard Content ────────────────────────────────────────────────────
+function DashboardContent() {
   const [page, setPage]            = useState('overview')
   const [data, setData]            = useState({})
   const [loading, setLoading]       = useState(true)
@@ -321,18 +357,18 @@ export default function Dashboard() {
   const [retryCountdown, setRetryCountdown] = useState(0)
   const [retryAttempt, setRetryAttempt]     = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const MAX_POLLS  = 45   // 45 × 4s = 3 minutes max wait
-  const POLL_DELAY = 4    // seconds between health checks
+  const MAX_POLLS  = 45
+  const POLL_DELAY = 4
 
   const fetchAllData = React.useCallback(() => {
     setLoading(true)
     setFetchErr(null)
     Promise.all([
-      fetch(`${API}/api/overview`).then(r    => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
-      fetch(`${API}/api/scatter`).then(r     => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
-      fetch(`${API}/api/departments`).then(r => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
-      fetch(`${API}/api/courses`).then(r     => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
-      fetch(`${API}/api/segments`).then(r    => { if(!r.ok) throw Object.assign(new Error(r.status), {status:r.status}); return r.json() }),
+      fetch(`${API}/api/overview`).then(r    => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API}/api/scatter`).then(r     => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API}/api/departments`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API}/api/courses`).then(r     => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API}/api/segments`).then(r    => r.ok ? r.json() : null).catch(() => null),
     ]).then(([overview, scatter, depts, courses, segments]) => {
       setData({ overview, scatter, depts, courses, segments })
       setWarmingUp(false)
@@ -514,17 +550,17 @@ export default function Dashboard() {
             <div>
               <div className="mb-6 sm:mb-8">
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Overview Dashboard</h1>
-                <p className="text-xs sm:text-sm text-gray-400 mt-1">Academic performance metrics across {ov.total_students?.toLocaleString()} students</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">Academic performance metrics across {ov.total_students ? ov.total_students.toLocaleString() : '10,000'} students</p>
               </div>
 
               {/* KPI Cards Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
-                <KPI label="Total Students"  value={ov.total_students?.toLocaleString()} sub="Enrolled" />
-                <KPI label="Avg GPA"         value={ov.avg_gpa}       sub="Out of 4.0" />
-                <KPI label="Avg Attendance"  value={`${ov.avg_attendance}%`} sub="All courses" />
-                <KPI label="At-Risk"         value={ov.at_risk?.toLocaleString()}
-                     sub={`${(ov.at_risk/ov.total_students*100).toFixed(1)}% of total`} danger />
-                <KPI label="Distinctions"    value={ov.distinctions?.toLocaleString()} sub="High performers" />
+                <KPI label="Total Students"  value={ov.total_students ? ov.total_students.toLocaleString() : '—'} sub="Enrolled" />
+                <KPI label="Avg GPA"         value={ov.avg_gpa ?? '—'}       sub="Out of 4.0" />
+                <KPI label="Avg Attendance"  value={ov.avg_attendance != null ? `${ov.avg_attendance}%` : '—'} sub="All courses" />
+                <KPI label="At-Risk"         value={ov.at_risk ? ov.at_risk.toLocaleString() : '—'}
+                     sub={ov.total_students ? `${(ov.at_risk/ov.total_students*100).toFixed(1)}% of total` : ''} danger />
+                <KPI label="Distinctions"    value={ov.distinctions ? ov.distinctions.toLocaleString() : '—'} sub="High performers" />
               </div>
 
               {/* Charts Row 1 */}
@@ -532,8 +568,8 @@ export default function Dashboard() {
                 <Card title="Result Distribution" sub="Pass / Fail / Distinction" badge="Classification">
                   <div className="h-[200px] sm:h-[220px]">
                     <Doughnut data={{
-                      labels: Object.keys(ov.result_counts||{}),
-                      datasets:[{data:Object.values(ov.result_counts||{}),
+                      labels: ov.result_counts ? Object.keys(ov.result_counts) : [],
+                      datasets:[{data: ov.result_counts ? Object.values(ov.result_counts) : [],
                         backgroundColor:['#10B981','#6366F1','#EF4444'], borderWidth:0, hoverOffset:6}]
                     }} options={{maintainAspectRatio:false, cutout:'70%', plugins:{legend:{position:'right', labels:{boxWidth:10}}}}} />
                   </div>
@@ -541,9 +577,9 @@ export default function Dashboard() {
                 <Card title="Student Segments" sub="K-Means cluster distribution" badge="Clustering">
                   <div className="h-[200px] sm:h-[220px]">
                     <Doughnut data={{
-                      labels: Object.keys(ov.segment_counts||{}),
-                      datasets:[{data:Object.values(ov.segment_counts||{}),
-                        backgroundColor:Object.keys(ov.segment_counts||{}).map(k=>SEG_COLORS[k]||ACCENT),
+                      labels: ov.segment_counts ? Object.keys(ov.segment_counts) : [],
+                      datasets:[{data: ov.segment_counts ? Object.values(ov.segment_counts) : [],
+                        backgroundColor: ov.segment_counts ? Object.keys(ov.segment_counts).map(k=>SEG_COLORS[k]||ACCENT) : [],
                         borderWidth:0, hoverOffset:6}]
                     }} options={{maintainAspectRatio:false, cutout:'70%', plugins:{legend:{position:'right', labels:{boxWidth:10}}}}} />
                   </div>
@@ -555,8 +591,8 @@ export default function Dashboard() {
                 <Card title="GPA Distribution" sub="Student GPA spread">
                   <div className="h-[180px] sm:h-[200px]">
                     <Bar data={{
-                      labels: ov.gpa_hist?.bins.slice(0,-1).map(b=>b.toFixed(1)),
-                      datasets:[{label:'Students', data:ov.gpa_hist?.values,
+                      labels: (ov.gpa_hist && Array.isArray(ov.gpa_hist.bins)) ? ov.gpa_hist.bins.slice(0,-1).map(b=> typeof b === 'number' ? b.toFixed(1) : b) : [],
+                      datasets:[{label:'Students', data: (ov.gpa_hist && Array.isArray(ov.gpa_hist.values)) ? ov.gpa_hist.values : [],
                         backgroundColor:`${ACCENT}88`, borderColor:ACCENT, borderWidth:1, borderRadius:3}]
                     }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,font:{size:9}}},y:{grid:{color:'#F1F5F9'},ticks:{font:{size:9}}}}}} />
                   </div>
@@ -564,22 +600,22 @@ export default function Dashboard() {
                 <Card title="Attendance Distribution" sub="Percentage across students">
                   <div className="h-[180px] sm:h-[200px]">
                     <Bar data={{
-                      labels: ov.att_hist?.bins.slice(0,-1).map(b=>b.toFixed(0)),
-                      datasets:[{label:'Students', data:ov.att_hist?.values,
+                      labels: (ov.att_hist && Array.isArray(ov.att_hist.bins)) ? ov.att_hist.bins.slice(0,-1).map(b=> typeof b === 'number' ? b.toFixed(0) : b) : [],
+                      datasets:[{label:'Students', data: (ov.att_hist && Array.isArray(ov.att_hist.values)) ? ov.att_hist.values : [],
                         backgroundColor:'#10B98188', borderColor:'#10B981', borderWidth:1, borderRadius:3}]
                     }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,font:{size:9}}},y:{grid:{color:'#F1F5F9'},ticks:{font:{size:9}}}}}} />
                   </div>
                 </Card>
               </div>
 
-              {data.scatter && (
+              {data.scatter && Array.isArray(data.scatter.attendance) && (
                 <Card title="Attendance vs GPA" sub="1,500 random students — coloured by result" badge="Correlation">
                   <div className="h-[240px] sm:h-[260px]">
                     <Scatter data={{
                       datasets:['Distinction','Pass','Fail'].map(cls=>({
                         label:cls,
-                        data:data.scatter.attendance.reduce((acc,a,i)=>
-                          data.scatter.result[i]===cls?[...acc,{x:a,y:data.scatter.gpa[i]}]:acc,[]),
+                        data: data.scatter.attendance.reduce((acc,a,i)=>
+                          data.scatter.result && data.scatter.result[i]===cls ? [...acc,{x:a,y:data.scatter.gpa[i]}]:acc,[]),
                         backgroundColor:(cls==='Distinction'?'#10B981':cls==='Pass'?'#6366F1':'#EF4444')+'55',
                         pointRadius:2.5, pointHoverRadius:4
                       }))
@@ -604,7 +640,7 @@ export default function Dashboard() {
           )}
 
           {/* ══ DEPARTMENTS ══ */}
-          {page === 'departments' && data.depts && (
+          {page === 'departments' && data.depts && Array.isArray(data.depts.ids) && (
             <div>
               <div className="mb-6 sm:mb-8">
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Department Performance</h1>
@@ -615,9 +651,9 @@ export default function Dashboard() {
                   <div className="h-[300px] sm:h-[360px]">
                     <Bar data={{
                       labels: data.depts.ids,
-                      datasets:[{label:'Avg GPA', data:data.depts.avg_gpa,
-                        backgroundColor: data.depts.avg_gpa.map(v=>v>=2.05?'#10B98166':v>=1.95?'#6366F166':'#EF444466'),
-                        borderColor:     data.depts.avg_gpa.map(v=>v>=2.05?'#10B981':v>=1.95?'#6366F1':'#EF4444'),
+                      datasets:[{label:'Avg GPA', data:data.depts.avg_gpa || [],
+                        backgroundColor: (data.depts.avg_gpa||[]).map(v=>v>=2.05?'#10B98166':v>=1.95?'#6366F166':'#EF444466'),
+                        borderColor:     (data.depts.avg_gpa||[]).map(v=>v>=2.05?'#10B981':v>=1.95?'#6366F1':'#EF4444'),
                         borderWidth:1.5, borderRadius:4}]
                     }} options={{...baseBar(true), scales:{x:{min:1.8,max:2.2,grid:{color:'#F8FAFC'},ticks:{font:{size:9}}},y:{grid:{display:false},ticks:{font:{size:9}}}}}} />
                   </div>
@@ -626,7 +662,7 @@ export default function Dashboard() {
                   <div className="h-[300px] sm:h-[360px]">
                     <Bar data={{
                       labels: data.depts.ids,
-                      datasets:[{label:'Pass %', data:data.depts.pass_pct,
+                      datasets:[{label:'Pass %', data:data.depts.pass_pct || [],
                         backgroundColor:`${ACCENT}33`, borderColor:ACCENT, borderWidth:1.5, borderRadius:4}]
                     }} options={{...baseBar(true), scales:{x:{min:70,max:90,grid:{color:'#F8FAFC'},ticks:{font:{size:9}}},y:{grid:{display:false},ticks:{font:{size:9}}}}}} />
                   </div>
@@ -636,7 +672,7 @@ export default function Dashboard() {
           )}
 
           {/* ══ COURSES ══ */}
-          {page === 'courses' && data.courses && (
+          {page === 'courses' && data.courses && Array.isArray(data.courses.ids) && (
             <div>
               <div className="mb-6 sm:mb-8">
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Course Difficulty Bottlenecks</h1>
@@ -647,9 +683,9 @@ export default function Dashboard() {
                   <div className="h-[280px] sm:h-[320px]">
                     <Bar data={{
                       labels: data.courses.ids,
-                      datasets:[{label:'Difficulty', data:data.courses.difficulty,
-                        backgroundColor: data.courses.difficulty.map(v=>v>1.2?'#EF444466':v>0.8?'#F59E0B66':'#10B98166'),
-                        borderColor:     data.courses.difficulty.map(v=>v>1.2?'#EF4444':v>0.8?'#F59E0B':'#10B981'),
+                      datasets:[{label:'Difficulty', data:data.courses.difficulty || [],
+                        backgroundColor: (data.courses.difficulty||[]).map(v=>v>1.2?'#EF444466':v>0.8?'#F59E0B66':'#10B98166'),
+                        borderColor:     (data.courses.difficulty||[]).map(v=>v>1.2?'#EF4444':v>0.8?'#F59E0B':'#10B981'),
                         borderWidth:1.5, borderRadius:4}]
                     }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#F8FAFC'},ticks:{font:{size:9}}}}}} />
                   </div>
@@ -658,7 +694,7 @@ export default function Dashboard() {
                   <div className="h-[280px] sm:h-[320px]">
                     <Bar data={{
                       labels: data.courses.ids,
-                      datasets:[{label:'Pass %', data:data.courses.pass_pct,
+                      datasets:[{label:'Pass %', data:data.courses.pass_pct || [],
                         backgroundColor:`${ACCENT}33`, borderColor:ACCENT, borderWidth:1.5, borderRadius:4}]
                     }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#F8FAFC'},ticks:{font:{size:9}}}}}} />
                   </div>
@@ -674,5 +710,14 @@ export default function Dashboard() {
         ))}
       </main>
     </div>
+  )
+}
+
+// Export Dashboard wrapped in ErrorBoundary to guarantee zero white-screen crashes
+export default function Dashboard() {
+  return (
+    <ErrorBoundary>
+      <DashboardContent />
+    </ErrorBoundary>
   )
 }
