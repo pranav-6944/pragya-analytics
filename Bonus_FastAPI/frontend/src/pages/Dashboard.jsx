@@ -191,12 +191,17 @@ function PredictPanel() {
 }
 
 // ── Segments section ──────────────────────────────────────────────────────────
-function SegmentsSection({ segData }) {
+function SegmentsSection({ segData, onRetry }) {
   const segs = segData?.segments
   if (!Array.isArray(segs) || segs.length === 0) {
     return (
       <div className="py-16 text-center text-slate-400">
-        <p className="text-sm">Segment data is not available yet. Try refreshing in a moment.</p>
+        <p className="text-sm">Segment data is not available yet.</p>
+        {onRetry && (
+          <button onClick={onRetry} className="mt-3 text-xs text-indigo-600 hover:text-indigo-700 font-semibold underline cursor-pointer">
+            🔄 Retry loading segments
+          </button>
+        )}
       </div>
     )
   }
@@ -205,7 +210,6 @@ function SegmentsSection({ segData }) {
   const loads = segData.avg_load      || segs.map(() => 0)
   const prs   = segData.avg_passrate  || segs.map(() => 0)
   const cnts  = segData.counts        || segs.map(() => 0)
-  const colors = Object.values(SEG_COLORS)
 
   return (
     <div>
@@ -219,20 +223,23 @@ function SegmentsSection({ segData }) {
             <Radar
               data={{
                 labels: ['GPA', 'Attendance', 'Course Load', 'Pass Rate'],
-                datasets: segs.map((s, i) => ({
-                  label: s,
-                  fill: true,
-                  data: [
-                    (gpas[i]  || 0) / 4 * 100,
-                    (atts[i]  || 0),
-                    Math.min((loads[i] || 0) / 60 * 100, 100),
-                    (prs[i]   || 0) * 100,
-                  ],
-                  backgroundColor: (colors[i] || ACCENT) + '33',
-                  borderColor:     colors[i]  || ACCENT,
-                  borderWidth: 2,
-                  pointRadius: 3,
-                }))
+                datasets: segs.map((s, i) => {
+                  const color = SEG_COLORS[s] || ACCENT
+                  return {
+                    label: s,
+                    fill: true,
+                    data: [
+                      (gpas[i]  || 0) / 4 * 100,
+                      (atts[i]  || 0),
+                      Math.min((loads[i] || 0) / 60 * 100, 100),
+                      (prs[i]   || 0) * 100,
+                    ],
+                    backgroundColor: color + '33',
+                    borderColor:     color,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                  }
+                })
               }}
               options={{
                 maintainAspectRatio: false,
@@ -264,8 +271,8 @@ function SegmentsSection({ segData }) {
                   <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/80">
                     <td className="py-2.5 pr-3">
                       <span className="flex items-center gap-2 font-medium text-slate-800">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ background: colors[i] || ACCENT }} />
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              style={{ background: SEG_COLORS[seg] || ACCENT }} />
                         <span className="text-xs truncate max-w-[110px] sm:max-w-none">{seg}</span>
                       </span>
                     </td>
@@ -661,7 +668,7 @@ export default function Dashboard() {
           )}
 
           {/* ══ SEGMENTS ══ */}
-          {page === 'segments' && <SegmentsSection segData={data.segments} />}
+          {page === 'segments' && <SegmentsSection segData={data.segments} onRetry={fetchAllData} />}
 
           </>
         ))}
