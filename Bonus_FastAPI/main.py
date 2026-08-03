@@ -274,10 +274,15 @@ app.include_router(api)
 @app.get("/", include_in_schema=False)
 @app.get("/{full_path:path}", include_in_schema=False)
 async def serve_react(full_path: str = ""):
-    # Don't catch API routes explicitly just in case, though ordering should fix it
+    # Don't catch API routes explicitly
     if full_path.startswith("api/") or full_path.startswith("assets/"):
         from fastapi import HTTPException
         raise HTTPException(status_code=404)
+    # Check if a static file in DIST (e.g. logo.png, favicon.png) exists
+    if full_path:
+        target = os.path.join(DIST, full_path)
+        if os.path.isfile(target):
+            return FileResponse(target)
     index = os.path.join(DIST, "index.html")
     if not os.path.exists(index):
         return JSONResponse({"error": "Frontend not built. Run 'npm run build' in frontend directory."})

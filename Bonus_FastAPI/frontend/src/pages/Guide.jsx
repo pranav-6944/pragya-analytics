@@ -164,7 +164,7 @@ export default function Guide() {
       <div className="bg-white border-b border-gray-200 px-4 sm:px-10 flex items-center justify-between h-14 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-2 sm:gap-4 truncate">
           <Link to="/" className="flex items-center gap-2 text-decoration-none">
-            <img src="/logo.png" alt="PRAGYA Logo" className="w-7 h-7 object-contain rounded-md bg-white p-0.5" />
+            <img src="/logo.png" alt="PRAGYA Logo" className="w-8 h-8 object-contain" />
             <span className="font-bold text-sm text-slate-900 tracking-tight">PRAGYA</span>
           </Link>
           <span className="text-slate-300 text-sm">/</span>

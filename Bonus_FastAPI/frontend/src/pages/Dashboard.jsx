@@ -414,7 +414,7 @@ export default function Dashboard() {
       {/* ── Mobile top navbar ── */}
       <header className="md:hidden sticky top-0 z-40 bg-slate-900 text-white px-4 h-14 flex items-center justify-between border-b border-slate-800 shadow-md">
         <Link to="/" className="flex items-center gap-2 text-decoration-none">
-          <img src="/logo.png" alt="PRAGYA Logo" className="w-7 h-7 object-contain rounded-md bg-white p-0.5" />
+          <img src="/logo.png" alt="PRAGYA Logo" className="w-8 h-8 object-contain" />
           <span className="font-bold text-sm tracking-tight text-white">PRAGYA</span>
         </Link>
 
@@ -445,7 +445,7 @@ export default function Dashboard() {
         mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'
       }`}>
         <Link to="/" className="flex items-center gap-2.5 px-5 py-4 border-b border-white/10 text-decoration-none">
-          <img src="/logo.png" alt="PRAGYA Logo" className="w-8 h-8 object-contain rounded-lg bg-white p-0.5 shadow-md" />
+          <img src="/logo.png" alt="PRAGYA Logo" className="w-9 h-9 object-contain" />
           <span className="text-white font-bold text-sm tracking-tight">PRAGYA</span>
         </Link>
 

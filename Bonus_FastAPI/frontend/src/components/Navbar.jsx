@@ -28,7 +28,7 @@ export default function Navbar() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 z-10" onClick={() => setMenuOpen(false)}>
-            <img src="/logo.png" alt="PRAGYA Logo" className="w-8 h-8 object-contain rounded-lg bg-white p-0.5 shadow-sm" />
+            <img src="/logo.png" alt="PRAGYA Logo" className="w-9 h-9 object-contain" />
             <span className="text-lg font-bold text-navy-900 tracking-tight">PRAGYA</span>
           </Link>
 
