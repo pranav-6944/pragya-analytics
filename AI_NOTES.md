@@ -31,3 +31,9 @@
 2. Responsive Grids (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-X`) for KPI cards, chart pairs, and stats cards.
 3. Responsive padding, typography, touch target sizing, and table overflow wrappers across all viewports down to 320px width.
 4. Continuous git commits and pushes to GitHub repository.
+
+## Logo & Branding Assets
+- **Logo Image**: `Bonus_FastAPI/frontend/public/logo.png`
+- **Favicon**: `Bonus_FastAPI/frontend/public/favicon.png` (configured in `index.html`)
+- **Root Image Backup**: `Pragya Logo.png`
+- **Used In Components**: `Navbar.jsx`, `Dashboard.jsx` (mobile header & sidebar), `Guide.jsx`, `Footer.jsx`
