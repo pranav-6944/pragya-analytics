@@ -15,7 +15,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white font-bold text-sm">P</div>
+              <img src="/logo.png" alt="PRAGYA Logo" className="w-8 h-8 object-contain rounded-lg bg-white p-0.5" />
               <span className="text-lg font-bold tracking-tight">PRAGYA</span>
             </div>
             <p className="text-white/50 text-sm leading-relaxed mb-5">
