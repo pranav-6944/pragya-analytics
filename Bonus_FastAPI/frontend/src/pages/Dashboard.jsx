@@ -11,13 +11,13 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement,
 
 // Defaults
 ChartJS.defaults.font.family = 'Inter, sans-serif'
-ChartJS.defaults.font.size   = 12
+ChartJS.defaults.font.size   = 11
 ChartJS.defaults.color       = '#64748B'
 ChartJS.defaults.plugins.tooltip.backgroundColor = '#0F172A'
 ChartJS.defaults.plugins.tooltip.padding         = 10
 ChartJS.defaults.plugins.tooltip.cornerRadius    = 8
 ChartJS.defaults.plugins.legend.labels.boxWidth  = 10
-ChartJS.defaults.plugins.legend.labels.padding   = 14
+ChartJS.defaults.plugins.legend.labels.padding   = 12
 
 // Use relative URLs – works both in dev (proxied) and production (same server)
 const API = ''
@@ -47,11 +47,11 @@ const RISK_REC = {
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 function KPI({ label, value, sub, danger }) {
   return (
-    <div className={`rounded-2xl border p-5 transition-all hover:shadow-md hover:-translate-y-0.5
+    <div className={`rounded-2xl border p-4 sm:p-5 transition-all hover:shadow-md hover:-translate-y-0.5
       ${danger ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'}`}>
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-      <p className={`text-3xl font-bold mb-1 ${danger ? 'text-red-600' : 'text-slate-900'}`}>{value ?? '—'}</p>
-      {sub && <p className="text-xs text-gray-400">{sub}</p>}
+      <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5 sm:mb-2 truncate">{label}</p>
+      <p className={`text-2xl sm:text-3xl font-bold mb-1 truncate ${danger ? 'text-red-600' : 'text-slate-900'}`}>{value ?? '—'}</p>
+      {sub && <p className="text-[10px] sm:text-xs text-gray-400 truncate">{sub}</p>}
     </div>
   )
 }
@@ -59,27 +59,16 @@ function KPI({ label, value, sub, danger }) {
 // ── Card wrapper ──────────────────────────────────────────────────────────────
 function Card({ title, sub, badge, children, className='' }) {
   return (
-    <div className={`bg-white border border-gray-100 rounded-2xl p-6 shadow-sm ${className}`}>
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <h3 className="font-semibold text-slate-900 text-sm">{title}</h3>
-          {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+    <div className={`bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-sm overflow-hidden ${className}`}>
+      <div className="flex items-start justify-between mb-4 sm:mb-5 gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-slate-900 text-xs sm:text-sm truncate">{title}</h3>
+          {sub && <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 truncate">{sub}</p>}
         </div>
-        {badge && <span className="text-xs bg-indigo-50 text-indigo-600 font-medium px-3 py-1 rounded-full">{badge}</span>}
+        {badge && <span className="text-[10px] sm:text-xs bg-indigo-50 text-indigo-600 font-medium px-2.5 py-0.5 sm:py-1 rounded-full flex-shrink-0">{badge}</span>}
       </div>
       {children}
     </div>
-  )
-}
-
-// ── Sidebar nav item ──────────────────────────────────────────────────────────
-function NavBtn({ icon, label, active, onClick }) {
-  return (
-    <button onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all
-        ${active ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'}`}>
-      <span>{icon}</span>{label}
-    </button>
   )
 }
 
@@ -118,28 +107,28 @@ function PredictPanel() {
   const probColors    = { Distinction:'#10B981', Pass:'#6366F1', Fail:'#EF4444' }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
       {/* Form */}
       <Card title="Student Profile" sub="Adjust sliders to model a student">
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           {sliders.map(s => (
             <div key={s.key}>
               <div className="flex justify-between mb-1.5">
-                <label className="text-sm font-medium text-slate-700">{s.label}</label>
-                <span className="text-sm font-semibold text-indigo-500 font-mono">{s.fmt(vals[s.key])}</span>
+                <label className="text-xs sm:text-sm font-medium text-slate-700">{s.label}</label>
+                <span className="text-xs sm:text-sm font-semibold text-indigo-500 font-mono">{s.fmt(vals[s.key])}</span>
               </div>
               <input type="range" min={s.min} max={s.max} step={s.step} value={vals[s.key]}
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+                className="w-full h-2 rounded-full appearance-none cursor-pointer touch-pan-x"
                 style={{accentColor:'#6366F1'}}
                 onChange={e => setVals(v => ({...v, [s.key]: parseFloat(e.target.value)}))} />
             </div>
           ))}
         </div>
-        {error && <p className="mt-4 text-sm text-red-500 bg-red-50 px-4 py-2 rounded-lg">{error}</p>}
+        {error && <p className="mt-4 text-xs sm:text-sm text-red-500 bg-red-50 px-4 py-2.5 rounded-lg">{error}</p>}
         <button onClick={predict} disabled={loading}
           style={{background:'#6366F1'}}
-          className="mt-6 w-full py-3.5 text-white font-semibold rounded-xl
-                     hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50">
+          className="mt-6 w-full py-3 sm:py-3.5 text-white text-xs sm:text-sm font-semibold rounded-xl
+                     hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 active:scale-[0.98]">
           {loading ? '⏳ Predicting…' : '🚀 Predict Outcome'}
         </button>
       </Card>
@@ -147,21 +136,21 @@ function PredictPanel() {
       {/* Result */}
       <Card title="Prediction Result" sub="Machine learning output">
         {!result ? (
-          <div className="flex flex-col items-center justify-center h-72 border-2 border-dashed border-gray-100 rounded-xl gap-3">
-            <span className="text-5xl">🔮</span>
-            <p className="text-sm text-gray-400">Set values and click Predict</p>
+          <div className="flex flex-col items-center justify-center min-h-[220px] sm:h-72 border-2 border-dashed border-gray-100 rounded-xl gap-3 p-4">
+            <span className="text-4xl sm:text-5xl">🔮</span>
+            <p className="text-xs sm:text-sm text-gray-400 text-center">Set values and click Predict</p>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {/* Result badge */}
-            <div className={`inline-flex items-center gap-3 px-5 py-3 rounded-xl font-bold text-xl ${rb.wrap}`}>
-              {rb.icon} {result.result}
-              <span className="text-sm font-normal opacity-50">GPA ≈ {result.gpa_estimate}</span>
+            <div className={`inline-flex items-center gap-2.5 sm:gap-3 px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-bold text-lg sm:text-xl ${rb.wrap}`}>
+              <span>{rb.icon}</span> <span>{result.result}</span>
+              <span className="text-xs sm:text-sm font-normal opacity-70 ml-auto">GPA ≈ {result.gpa_estimate}</span>
             </div>
 
             {/* Risk bar */}
             <div>
-              <div className="flex justify-between text-sm mb-2">
+              <div className="flex justify-between text-xs sm:text-sm mb-2">
                 <span className="font-medium text-slate-700">
                   Dropout Risk —{' '}
                   <span className={riskTextColor}>{result.risk_level}</span>
@@ -175,10 +164,10 @@ function PredictPanel() {
             </div>
 
             {/* Prob bars */}
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               {Object.entries(result.probabilities).map(([cls, p]) => (
-                <div key={cls} className="flex items-center gap-3">
-                  <span className="text-xs font-medium text-gray-500 w-24 flex-shrink-0">{cls}</span>
+                <div key={cls} className="flex items-center gap-2.5 sm:gap-3">
+                  <span className="text-xs font-medium text-gray-500 w-20 sm:w-24 flex-shrink-0 truncate">{cls}</span>
                   <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-700"
                          style={{width:`${p*100}%`, background: probColors[cls]}} />
@@ -190,7 +179,7 @@ function PredictPanel() {
 
             {/* Recommendation */}
             {rec && (
-              <div className={`p-4 rounded-xl text-sm leading-relaxed border-l-4 ${rec.cls}`}>
+              <div className={`p-3.5 sm:p-4 rounded-xl text-xs sm:text-sm leading-relaxed border-l-4 ${rec.cls}`}>
                 {rec.msg}
               </div>
             )}
@@ -201,13 +190,13 @@ function PredictPanel() {
   )
 }
 
-// ── Segments section (standalone to avoid IIFE render issues) ─────────────────
+// ── Segments section ──────────────────────────────────────────────────────────
 function SegmentsSection({ segData }) {
   const segs = segData?.segments
   if (!Array.isArray(segs) || segs.length === 0) {
     return (
-      <div style={{padding:'60px 0', textAlign:'center', color:'#94A3B8'}}>
-        <p style={{fontSize:14}}>Segment data is not available yet. Try refreshing in a moment.</p>
+      <div className="py-16 text-center text-slate-400">
+        <p className="text-sm">Segment data is not available yet. Try refreshing in a moment.</p>
       </div>
     )
   }
@@ -220,13 +209,13 @@ function SegmentsSection({ segData }) {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Student Segments</h1>
-        <p className="text-sm text-gray-400 mt-1">K-Means clustering (k=4) — comparative profile</p>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Student Segments</h1>
+        <p className="text-xs sm:text-sm text-gray-400 mt-1">K-Means clustering (k=4) — comparative profile</p>
       </div>
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <Card title="Segment Radar" sub="Feature comparison across all clusters" badge="K-Means">
-          <div style={{height:300}}>
+          <div className="h-[260px] sm:h-[300px]">
             <Radar
               data={{
                 labels: ['GPA', 'Attendance', 'Course Load', 'Pass Rate'],
@@ -242,15 +231,16 @@ function SegmentsSection({ segData }) {
                   backgroundColor: (colors[i] || ACCENT) + '33',
                   borderColor:     colors[i]  || ACCENT,
                   borderWidth: 2,
-                  pointRadius: 4,
+                  pointRadius: 3,
                 }))
               }}
               options={{
-                plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } },
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
                 scales: {
                   r: {
                     min: 0, max: 100,
-                    ticks: { stepSize: 25, font: { size: 10 } },
+                    ticks: { stepSize: 25, font: { size: 9 } },
                     grid:  { color: '#E2E8F0' },
                   }
                 }
@@ -260,29 +250,29 @@ function SegmentsSection({ segData }) {
         </Card>
 
         <Card title="Segment Profiles" sub="Average feature values per cluster">
-          <div className="overflow-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
                   {['Segment','Count','Avg GPA','Att %','Pass %'].map(h => (
-                    <th key={h} className="text-left text-xs text-gray-400 uppercase tracking-wide pb-3 font-semibold pr-4">{h}</th>
+                    <th key={h} className="text-left text-[10px] sm:text-xs text-gray-400 uppercase tracking-wide pb-3 font-semibold pr-3">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {segs.map((seg, i) => (
                   <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/80">
-                    <td className="py-3 pr-4">
+                    <td className="py-2.5 pr-3">
                       <span className="flex items-center gap-2 font-medium text-slate-800">
                         <span className="w-2 h-2 rounded-full flex-shrink-0"
                               style={{ background: colors[i] || ACCENT }} />
-                        <span className="text-xs">{seg}</span>
+                        <span className="text-xs truncate max-w-[110px] sm:max-w-none">{seg}</span>
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-gray-600 tabular-nums">{(cnts[i] ?? 0).toLocaleString()}</td>
-                    <td className="py-3 pr-4 text-gray-600 tabular-nums">{(gpas[i] ?? 0).toFixed(3)}</td>
-                    <td className="py-3 pr-4 text-gray-600 tabular-nums">{(atts[i] ?? 0).toFixed(1)}%</td>
-                    <td className="py-3 text-gray-600 tabular-nums">{((prs[i] ?? 0) * 100).toFixed(1)}%</td>
+                    <td className="py-2.5 pr-3 text-gray-600 tabular-nums">{(cnts[i] ?? 0).toLocaleString()}</td>
+                    <td className="py-2.5 pr-3 text-gray-600 tabular-nums">{(gpas[i] ?? 0).toFixed(2)}</td>
+                    <td className="py-2.5 pr-3 text-gray-600 tabular-nums">{(atts[i] ?? 0).toFixed(1)}%</td>
+                    <td className="py-2.5 text-gray-600 tabular-nums">{((prs[i] ?? 0) * 100).toFixed(1)}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -297,7 +287,7 @@ function SegmentsSection({ segData }) {
 // ── Loading spinner ───────────────────────────────────────────────────────────
 function Spinner() {
   return (
-    <div className="flex items-center justify-center h-96 gap-3 text-gray-400 text-sm">
+    <div className="flex items-center justify-center h-80 sm:h-96 gap-3 text-gray-400 text-xs sm:text-sm">
       <div className="w-5 h-5 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
       Loading analytics…
     </div>
@@ -306,22 +296,24 @@ function Spinner() {
 
 // ── Chart options helpers ──────────────────────────────────────────────────────
 const baseBar = (horiz=false) => ({
+  maintainAspectRatio: false,
   indexAxis: horiz ? 'y' : 'x',
   plugins:   { legend:{ display:false } },
   scales: horiz
-    ? { x:{ grid:{color:'#F8FAFC'} }, y:{ grid:{display:false}, ticks:{font:{size:11}} } }
-    : { x:{ grid:{display:false} },   y:{ grid:{color:'#F8FAFC'} } }
+    ? { x:{ grid:{color:'#F8FAFC'}, ticks:{font:{size:10}} }, y:{ grid:{display:false}, ticks:{font:{size:10}} } }
+    : { x:{ grid:{display:false}, ticks:{font:{size:10}} },   y:{ grid:{color:'#F8FAFC'}, ticks:{font:{size:10}} } }
 })
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const [page, setPage]      = useState('overview')
-  const [data, setData]      = useState({})
-  const [loading, setLoading] = useState(true)
-  const [fetchErr, setFetchErr] = useState(null)
-  const [warmingUp, setWarmingUp] = useState(false)
+  const [page, setPage]            = useState('overview')
+  const [data, setData]            = useState({})
+  const [loading, setLoading]       = useState(true)
+  const [fetchErr, setFetchErr]     = useState(null)
+  const [warmingUp, setWarmingUp]   = useState(false)
   const [retryCountdown, setRetryCountdown] = useState(0)
   const [retryAttempt, setRetryAttempt]     = useState(0)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const MAX_POLLS  = 45   // 45 × 4s = 3 minutes max wait
   const POLL_DELAY = 4    // seconds between health checks
 
@@ -355,11 +347,9 @@ export default function Dashboard() {
       .then(r => r.json())
       .then(h => {
         if (h.models_loaded) {
-          // ✅ Models ready — go fetch dashboard data
           setWarmingUp(false)
           fetchAllData()
         } else if (poll < MAX_POLLS) {
-          // ⏳ Still loading — start countdown, then poll again
           let secs = POLL_DELAY
           setRetryCountdown(secs)
           const tick = setInterval(() => {
@@ -368,14 +358,12 @@ export default function Dashboard() {
             if (secs <= 0) { clearInterval(tick); pollHealth(poll + 1) }
           }, 1000)
         } else {
-          // ❌ Gave up after 3 minutes
           setFetchErr('Server took too long to load models. Please refresh the page.')
           setWarmingUp(false)
           setLoading(false)
         }
       })
       .catch(() => {
-        // Health endpoint itself failed (server down)
         if (poll < MAX_POLLS) {
           let secs = POLL_DELAY
           setRetryCountdown(secs)
@@ -393,7 +381,6 @@ export default function Dashboard() {
   }, [fetchAllData])
 
   useEffect(() => {
-    // First check health; if models already ready, fetch immediately
     fetch(`${API}/api/health`)
       .then(r => r.json())
       .then(h => {
@@ -416,61 +403,85 @@ export default function Dashboard() {
 
   const ov = data.overview || {}
 
-  return (
-    <div style={{display:'flex', minHeight:'100vh', fontFamily:'Inter,sans-serif', background:'#F8FAFC'}}>
+  const handleNavClick = (id) => {
+    setPage(id)
+    setMobileMenuOpen(false)
+  }
 
-      {/* ── Sidebar ── */}
-      <aside style={{width:220, background:'#0F172A', minHeight:'100vh', position:'fixed', top:0, left:0,
-                     display:'flex', flexDirection:'column', zIndex:40}}>
-        <Link to="/" style={{display:'flex', alignItems:'center', gap:10, padding:'20px 20px 16px',
-                              borderBottom:'1px solid rgba(255,255,255,0.06)', textDecoration:'none'}}>
-          <div style={{width:32, height:32, background:'#6366F1', borderRadius:8,
-                       display:'flex', alignItems:'center', justifyContent:'center',
-                       color:'white', fontWeight:700, fontSize:13}}>P</div>
-          <span style={{color:'white', fontWeight:700, fontSize:14, letterSpacing:'-0.02em'}}>PRAGYA</span>
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col md:flex-row">
+
+      {/* ── Mobile top navbar ── */}
+      <header className="md:hidden sticky top-0 z-40 bg-slate-900 text-white px-4 h-14 flex items-center justify-between border-b border-slate-800 shadow-md">
+        <Link to="/" className="flex items-center gap-2 text-decoration-none">
+          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">P</div>
+          <span className="font-bold text-sm tracking-tight text-white">PRAGYA</span>
         </Link>
 
-        <div style={{padding:'16px 12px', flex:1}}>
-          <p style={{fontSize:10, color:'rgba(255,255,255,0.25)', textTransform:'uppercase',
-                     letterSpacing:'0.1em', fontWeight:600, paddingLeft:8, marginBottom:10}}>Analytics</p>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-indigo-400 font-medium bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20 truncate max-w-[120px]">
+            {navItems.find(n => n.id === page)?.label}
+          </span>
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                  aria-label="Toggle Navigation">
+            <div className="w-5 h-4 flex flex-col justify-between">
+              <div className={`w-5 h-0.5 bg-white transition-all origin-left ${mobileMenuOpen ? 'rotate-45 translate-x-0.5 -translate-y-0.5' : ''}`} />
+              <div className={`w-5 h-0.5 bg-white transition-all ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+              <div className={`w-5 h-0.5 bg-white transition-all origin-left ${mobileMenuOpen ? '-rotate-45 translate-x-0.5 translate-y-0.5' : ''}`} />
+            </div>
+          </button>
+        </div>
+      </header>
+
+      {/* ── Mobile menu backdrop ── */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 md:hidden"
+             onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* ── Responsive Sidebar Drawer ── */}
+      <aside className={`fixed top-0 left-0 bottom-0 z-50 w-64 md:w-56 bg-slate-900 text-white flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 ${
+        mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'
+      }`}>
+        <Link to="/" className="flex items-center gap-2.5 px-5 py-4 border-b border-white/10 text-decoration-none">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">P</div>
+          <span className="text-white font-bold text-sm tracking-tight">PRAGYA</span>
+        </Link>
+
+        <div className="p-3 flex-1 overflow-y-auto">
+          <p className="text-[10px] text-white/30 uppercase tracking-widest font-semibold px-2 mb-2">Analytics</p>
           {navItems.map(n => (
-            <button key={n.id} onClick={()=>setPage(n.id)}
-              style={{
-                display:'flex', alignItems:'center', gap:10, width:'100%', padding:'9px 10px',
-                borderRadius:10, border:'none', cursor:'pointer', textAlign:'left', fontSize:13,
-                fontWeight:500, marginBottom:3, transition:'all 0.15s',
-                background: page===n.id ? 'rgba(99,102,241,0.15)' : 'transparent',
-                color: page===n.id ? '#818CF8' : 'rgba(255,255,255,0.45)',
-              }}>
-              <span>{n.icon}</span>{n.label}
+            <button key={n.id} onClick={() => handleNavClick(n.id)}
+              className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl border-0 cursor-pointer text-left text-xs font-medium mb-1 transition-all ${
+                page===n.id ? 'bg-indigo-500/20 text-indigo-400 font-semibold' : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}>
+              <span className="text-sm">{n.icon}</span>
+              <span>{n.label}</span>
             </button>
           ))}
         </div>
 
-        <Link to="/guide" style={{display:'flex', alignItems:'center', gap:10, padding:'12px 20px',
-                                   borderTop:'1px solid rgba(255,255,255,0.06)',
-                                   color:'rgba(255,255,255,0.3)', fontSize:12, textDecoration:'none'}}>
+        <Link to="/guide" className="flex items-center gap-2 px-5 py-3 border-t border-white/10 text-white/40 hover:text-white text-xs text-decoration-none transition-colors">
           📖 User Guide
         </Link>
-        <div style={{padding:'12px 20px 20px', fontSize:11, color:'rgba(255,255,255,0.2)', lineHeight:1.7}}>
+        <div className="px-5 py-4 text-[11px] text-white/30 border-t border-white/5 leading-relaxed">
           Pranav Lamkhade<br/>Roll 42 · PRN 202401120062
         </div>
       </aside>
 
       {/* ── Main content ── */}
-      <main style={{marginLeft:220, flex:1, padding:'32px 36px'}}>
+      <main className="flex-1 md:ml-56 p-4 sm:p-6 md:p-8 min-w-0">
 
         {/* Warming-up banner (cold start) */}
         {warmingUp && (
-          <div style={{marginBottom:16, padding:'14px 18px', background:'#FFF7ED', border:'1px solid #FED7AA',
-                       borderRadius:12, display:'flex', alignItems:'center', gap:12}}>
-            <div style={{width:20, height:20, border:'2px solid #FB923C', borderTopColor:'transparent',
-                         borderRadius:'50%', animation:'spin 0.8s linear infinite', flexShrink:0}} />
+          <div className="mb-4 p-3.5 sm:p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center gap-3 text-xs sm:text-sm">
+            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
             <div>
-              <p style={{margin:0, fontSize:13, fontWeight:600, color:'#C2410C'}}>
+              <p className="margin-0 font-semibold text-orange-800">
                 🚀 AI Models loading on server… (check {retryAttempt}/{MAX_POLLS})
               </p>
-              <p style={{margin:'2px 0 0', fontSize:12, color:'#EA580C'}}>
+              <p className="margin-0 text-orange-600 text-xs mt-0.5">
                 Elapsed ≈ {Math.round(retryAttempt * POLL_DELAY)}s — Retrying in {retryCountdown}s.
                 Free tier needs ~60s to train models. Please wait…
               </p>
@@ -479,12 +490,10 @@ export default function Dashboard() {
         )}
 
         {fetchErr && (
-          <div style={{marginBottom:16, padding:'14px 18px', background:'#FEF2F2', border:'1px solid #FECACA',
-                       borderRadius:12, fontSize:13, color:'#B91C1C'}}>
+          <div className="mb-4 p-3.5 sm:p-4 bg-red-50 border border-red-200 rounded-xl text-xs sm:text-sm text-red-700">
             ⚠️ Could not connect to the API server (<code>{fetchErr}</code>).{' '}
             <button onClick={() => pollHealth(0)}
-              style={{marginLeft:8, fontSize:12, fontWeight:600, color:'#6366F1',
-                      background:'none', border:'none', cursor:'pointer', textDecoration:'underline'}}>
+              className="ml-2 font-semibold text-indigo-600 bg-none border-0 cursor-pointer underline">
               Retry now
             </button>
           </div>
@@ -496,12 +505,13 @@ export default function Dashboard() {
           {/* ══ OVERVIEW ══ */}
           {page === 'overview' && (
             <div>
-              <div className="mb-8">
-                <h1 className="text-2xl font-bold text-slate-900">Overview Dashboard</h1>
-                <p className="text-sm text-gray-400 mt-1">Academic performance metrics across {ov.total_students?.toLocaleString()} students</p>
+              <div className="mb-6 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Overview Dashboard</h1>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">Academic performance metrics across {ov.total_students?.toLocaleString()} students</p>
               </div>
 
-              <div className="grid grid-cols-5 gap-4 mb-6">
+              {/* KPI Cards Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
                 <KPI label="Total Students"  value={ov.total_students?.toLocaleString()} sub="Enrolled" />
                 <KPI label="Avg GPA"         value={ov.avg_gpa}       sub="Out of 4.0" />
                 <KPI label="Avg Attendance"  value={`${ov.avg_attendance}%`} sub="All courses" />
@@ -510,63 +520,65 @@ export default function Dashboard() {
                 <KPI label="Distinctions"    value={ov.distinctions?.toLocaleString()} sub="High performers" />
               </div>
 
-              <div className="grid grid-cols-2 gap-5 mb-5">
+              {/* Charts Row 1 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mb-5">
                 <Card title="Result Distribution" sub="Pass / Fail / Distinction" badge="Classification">
-                  <div style={{height:220}}>
+                  <div className="h-[200px] sm:h-[220px]">
                     <Doughnut data={{
                       labels: Object.keys(ov.result_counts||{}),
                       datasets:[{data:Object.values(ov.result_counts||{}),
                         backgroundColor:['#10B981','#6366F1','#EF4444'], borderWidth:0, hoverOffset:6}]
-                    }} options={{cutout:'70%', plugins:{legend:{position:'right'}}}} />
+                    }} options={{maintainAspectRatio:false, cutout:'70%', plugins:{legend:{position:'right', labels:{boxWidth:10}}}}} />
                   </div>
                 </Card>
                 <Card title="Student Segments" sub="K-Means cluster distribution" badge="Clustering">
-                  <div style={{height:220}}>
+                  <div className="h-[200px] sm:h-[220px]">
                     <Doughnut data={{
                       labels: Object.keys(ov.segment_counts||{}),
                       datasets:[{data:Object.values(ov.segment_counts||{}),
                         backgroundColor:Object.keys(ov.segment_counts||{}).map(k=>SEG_COLORS[k]||ACCENT),
                         borderWidth:0, hoverOffset:6}]
-                    }} options={{cutout:'70%', plugins:{legend:{position:'right'}}}} />
+                    }} options={{maintainAspectRatio:false, cutout:'70%', plugins:{legend:{position:'right', labels:{boxWidth:10}}}}} />
                   </div>
                 </Card>
               </div>
 
-              <div className="grid grid-cols-2 gap-5 mb-5">
+              {/* Charts Row 2 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mb-5">
                 <Card title="GPA Distribution" sub="Student GPA spread">
-                  <div style={{height:190}}>
+                  <div className="h-[180px] sm:h-[200px]">
                     <Bar data={{
                       labels: ov.gpa_hist?.bins.slice(0,-1).map(b=>b.toFixed(1)),
                       datasets:[{label:'Students', data:ov.gpa_hist?.values,
                         backgroundColor:`${ACCENT}88`, borderColor:ACCENT, borderWidth:1, borderRadius:3}]
-                    }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,font:{size:10}}},y:{grid:{color:'#F1F5F9'}}}}} />
+                    }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,font:{size:9}}},y:{grid:{color:'#F1F5F9'},ticks:{font:{size:9}}}}}} />
                   </div>
                 </Card>
                 <Card title="Attendance Distribution" sub="Percentage across students">
-                  <div style={{height:190}}>
+                  <div className="h-[180px] sm:h-[200px]">
                     <Bar data={{
                       labels: ov.att_hist?.bins.slice(0,-1).map(b=>b.toFixed(0)),
                       datasets:[{label:'Students', data:ov.att_hist?.values,
                         backgroundColor:'#10B98188', borderColor:'#10B981', borderWidth:1, borderRadius:3}]
-                    }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,font:{size:10}}},y:{grid:{color:'#F1F5F9'}}}}} />
+                    }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,font:{size:9}}},y:{grid:{color:'#F1F5F9'},ticks:{font:{size:9}}}}}} />
                   </div>
                 </Card>
               </div>
 
               {data.scatter && (
                 <Card title="Attendance vs GPA" sub="1,500 random students — coloured by result" badge="Correlation">
-                  <div style={{height:260}}>
+                  <div className="h-[240px] sm:h-[260px]">
                     <Scatter data={{
                       datasets:['Distinction','Pass','Fail'].map(cls=>({
                         label:cls,
                         data:data.scatter.attendance.reduce((acc,a,i)=>
                           data.scatter.result[i]===cls?[...acc,{x:a,y:data.scatter.gpa[i]}]:acc,[]),
                         backgroundColor:(cls==='Distinction'?'#10B981':cls==='Pass'?'#6366F1':'#EF4444')+'55',
-                        pointRadius:3, pointHoverRadius:5
+                        pointRadius:2.5, pointHoverRadius:4
                       }))
-                    }} options={{plugins:{legend:{position:'top'}},
-                      scales:{x:{title:{display:true,text:'Attendance %',font:{size:11}},grid:{color:'#F8FAFC'}},
-                               y:{title:{display:true,text:'GPA',font:{size:11}},grid:{color:'#F8FAFC'}}}}} />
+                    }} options={{maintainAspectRatio:false, plugins:{legend:{position:'top', labels:{boxWidth:10}}},
+                      scales:{x:{title:{display:true,text:'Attendance %',font:{size:10}},grid:{color:'#F8FAFC'},ticks:{font:{size:9}}},
+                               y:{title:{display:true,text:'GPA',font:{size:10}},grid:{color:'#F8FAFC'},ticks:{font:{size:9}}}}}} />
                   </div>
                 </Card>
               )}
@@ -576,9 +588,9 @@ export default function Dashboard() {
           {/* ══ PREDICT ══ */}
           {page === 'predict' && (
             <div>
-              <div className="mb-8">
-                <h1 className="text-2xl font-bold text-slate-900">Predict Student Outcome</h1>
-                <p className="text-sm text-gray-400 mt-1">Powered by Random Forest & Neural Network</p>
+              <div className="mb-6 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Predict Student Outcome</h1>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">Powered by Random Forest & Neural Network</p>
               </div>
               <PredictPanel />
             </div>
@@ -587,29 +599,29 @@ export default function Dashboard() {
           {/* ══ DEPARTMENTS ══ */}
           {page === 'departments' && data.depts && (
             <div>
-              <div className="mb-8">
-                <h1 className="text-2xl font-bold text-slate-900">Department Performance</h1>
-                <p className="text-sm text-gray-400 mt-1">Top 15 departments — Green means High, Red means At-Risk</p>
+              <div className="mb-6 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Department Performance</h1>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">Top 15 departments — Green means High, Red means At-Risk</p>
               </div>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
                 <Card title="Avg GPA by Department" sub="Coloured by performance">
-                  <div style={{height:360}}>
+                  <div className="h-[300px] sm:h-[360px]">
                     <Bar data={{
                       labels: data.depts.ids,
                       datasets:[{label:'Avg GPA', data:data.depts.avg_gpa,
                         backgroundColor: data.depts.avg_gpa.map(v=>v>=2.05?'#10B98166':v>=1.95?'#6366F166':'#EF444466'),
                         borderColor:     data.depts.avg_gpa.map(v=>v>=2.05?'#10B981':v>=1.95?'#6366F1':'#EF4444'),
                         borderWidth:1.5, borderRadius:4}]
-                    }} options={{...baseBar(true), scales:{x:{min:1.8,max:2.2,grid:{color:'#F8FAFC'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}} />
+                    }} options={{...baseBar(true), scales:{x:{min:1.8,max:2.2,grid:{color:'#F8FAFC'},ticks:{font:{size:9}}},y:{grid:{display:false},ticks:{font:{size:9}}}}}} />
                   </div>
                 </Card>
                 <Card title="Pass Rate % by Department">
-                  <div style={{height:360}}>
+                  <div className="h-[300px] sm:h-[360px]">
                     <Bar data={{
                       labels: data.depts.ids,
                       datasets:[{label:'Pass %', data:data.depts.pass_pct,
                         backgroundColor:`${ACCENT}33`, borderColor:ACCENT, borderWidth:1.5, borderRadius:4}]
-                    }} options={{...baseBar(true), scales:{x:{min:70,max:90,grid:{color:'#F8FAFC'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}} />
+                    }} options={{...baseBar(true), scales:{x:{min:70,max:90,grid:{color:'#F8FAFC'},ticks:{font:{size:9}}},y:{grid:{display:false},ticks:{font:{size:9}}}}}} />
                   </div>
                 </Card>
               </div>
@@ -619,29 +631,29 @@ export default function Dashboard() {
           {/* ══ COURSES ══ */}
           {page === 'courses' && data.courses && (
             <div>
-              <div className="mb-8">
-                <h1 className="text-2xl font-bold text-slate-900">Course Difficulty Bottlenecks</h1>
-                <p className="text-sm text-gray-400 mt-1">Difficulty = (1 − Pass Rate) × Credits &nbsp;·&nbsp; Red = Very Hard</p>
+              <div className="mb-6 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Course Difficulty Bottlenecks</h1>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">Difficulty = (1 − Pass Rate) × Credits &nbsp;·&nbsp; Red = Very Hard</p>
               </div>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
                 <Card title="Difficulty Score" sub="Higher = needs more academic intervention">
-                  <div style={{height:320}}>
+                  <div className="h-[280px] sm:h-[320px]">
                     <Bar data={{
                       labels: data.courses.ids,
                       datasets:[{label:'Difficulty', data:data.courses.difficulty,
                         backgroundColor: data.courses.difficulty.map(v=>v>1.2?'#EF444466':v>0.8?'#F59E0B66':'#10B98166'),
                         borderColor:     data.courses.difficulty.map(v=>v>1.2?'#EF4444':v>0.8?'#F59E0B':'#10B981'),
                         borderWidth:1.5, borderRadius:4}]
-                    }} options={{...baseBar(), scales:{x:{grid:{display:false}},y:{grid:{color:'#F8FAFC'}}}}} />
+                    }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#F8FAFC'},ticks:{font:{size:9}}}}}} />
                   </div>
                 </Card>
                 <Card title="Pass Rate %" sub="Lower = course bottleneck">
-                  <div style={{height:320}}>
+                  <div className="h-[280px] sm:h-[320px]">
                     <Bar data={{
                       labels: data.courses.ids,
                       datasets:[{label:'Pass %', data:data.courses.pass_pct,
                         backgroundColor:`${ACCENT}33`, borderColor:ACCENT, borderWidth:1.5, borderRadius:4}]
-                    }} options={{...baseBar(), scales:{x:{grid:{display:false}},y:{grid:{color:'#F8FAFC'}}}}} />
+                    }} options={{...baseBar(), scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#F8FAFC'},ticks:{font:{size:9}}}}}} />
                   </div>
                 </Card>
               </div>

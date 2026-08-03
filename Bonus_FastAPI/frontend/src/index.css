@@ -5,33 +5,33 @@
 
 @layer base {
   html { scroll-behavior: smooth; }
-  body { @apply font-sans text-navy-900 bg-white antialiased; }
+  body { @apply font-sans text-navy-900 bg-white antialiased overflow-x-hidden; }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 bg-accent text-white font-semibold px-7 py-3.5 rounded-xl
+    @apply inline-flex items-center gap-2 bg-accent text-white font-semibold px-6 sm:px-7 py-3 sm:py-3.5 rounded-xl
            hover:bg-accent-hover transition-all duration-200 shadow-lg shadow-accent/20
-           hover:shadow-accent/30 hover:-translate-y-0.5 hover:shadow-xl;
+           hover:shadow-accent/30 hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0;
   }
   .btn-outline {
-    @apply inline-flex items-center gap-2 border-2 border-navy-900 text-navy-900 font-semibold px-7 py-3.5 rounded-xl
-           hover:bg-navy-900 hover:text-white transition-all duration-200 hover:-translate-y-0.5;
+    @apply inline-flex items-center gap-2 border-2 border-navy-900 text-navy-900 font-semibold px-6 sm:px-7 py-3 sm:py-3.5 rounded-xl
+           hover:bg-navy-900 hover:text-white transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0;
   }
   .btn-outline-white {
-    @apply inline-flex items-center gap-2 border-2 border-white text-white font-semibold px-7 py-3.5 rounded-xl
+    @apply inline-flex items-center gap-2 border-2 border-white text-white font-semibold px-6 sm:px-7 py-3 sm:py-3.5 rounded-xl
            hover:bg-white hover:text-navy-900 transition-all duration-200;
   }
-  .section { @apply py-24 px-6; }
+  .section { @apply py-16 sm:py-24 px-4 sm:px-6; }
   .container { @apply max-w-6xl mx-auto; }
   .section-tag {
     @apply inline-flex items-center gap-2 bg-accent-light text-accent text-xs font-semibold
-           uppercase tracking-widest px-4 py-1.5 rounded-full mb-5;
+           uppercase tracking-widest px-4 py-1.5 rounded-full mb-4 sm:mb-5;
   }
-  .section-title { @apply text-4xl font-bold text-navy-900 leading-tight; }
-  .section-sub { @apply text-lg text-navy-600 mt-4 leading-relaxed; }
+  .section-title { @apply text-2xl sm:text-4xl font-bold text-navy-900 leading-tight; }
+  .section-sub { @apply text-base sm:text-lg text-navy-600 mt-3 sm:mt-4 leading-relaxed; }
   .card {
-    @apply bg-white border border-gray-100 rounded-2xl p-8 hover:shadow-xl hover:-translate-y-1
+    @apply bg-white border border-gray-100 rounded-2xl p-4 sm:p-8 hover:shadow-xl hover:-translate-y-1
            transition-all duration-300 shadow-sm;
   }
 }
@@ -52,11 +52,14 @@
   pointer-events: none; border-radius: inherit; z-index: 1;
 }
 
-/* Chart canvas */
-canvas { max-height: 280px !important; }
+/* Responsive chart canvas container */
+canvas {
+  width: 100% !important;
+  max-width: 100% !important;
+}
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 99px; }
 
